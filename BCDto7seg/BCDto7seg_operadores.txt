@@ -1,4 +1,4 @@
-module BCDto7seg #(parameter common_cathode=0)(output a, b, c, d, e, f, g, input [3:0] BCD);
+module BCDto7seg #(parameter common_cathode=1)(output a, b, c, d, e, f, g, input [3:0] BCD);
   wire [3:0] nBCD;
   assign nBCD = ~BCD;
 
@@ -15,8 +15,8 @@ module BCDto7seg #(parameter common_cathode=0)(output a, b, c, d, e, f, g, input
       end
     else
       begin
-        assign a = nBCD[3]&BCD[2]&nBCD[1]&nBCD[0] | nBCD[3]&nBCD[2]&nBCD[1]&BCD[0];
-        assign b = nBCD[3]&BCD[2]&nBCD[1]&BCD[0] | nBCD[3]&BCD[2]&BCD[1]&nBCD[0];
+        assign a = BCD[2]&nBCD[1]&nBCD[0] | nBCD[3]&nBCD[2]&nBCD[1]&BCD[0];
+        assign b = BCD[2]&nBCD[1]&BCD[0] | BCD[2]&BCD[1]&nBCD[0];
         assign c = nBCD[2]&BCD[1]&nBCD[0];
         assign d = nBCD[3]&nBCD[2]&nBCD[1]&BCD[0] | BCD[2]&BCD[1]&BCD[0] | BCD[2]&nBCD[1]&nBCD[0];
         assign e = BCD[2]&nBCD[1] | BCD[0];

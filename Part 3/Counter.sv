@@ -1,4 +1,5 @@
-module BCDto7seg #(parameter common_cathode=0)(output a, b, c, d, e, f, g, input [3:0] BCD);
+// Decodificador BCD para display 7 segmentos, produzido na parte 1
+module BCDto7seg #(parameter common_cathode=1)(output a, b, c, d, e, f, g, input [3:0] BCD);
   reg [6:0] seg;
 
   generate
@@ -40,16 +41,14 @@ module BCDto7seg #(parameter common_cathode=0)(output a, b, c, d, e, f, g, input
   assign {a,b,c,d,e,f,g} = seg;
 endmodule
 
-module dff(output reg q, qb, input clk, d, enb, rst);
-  always @ (negedge clk or posedge rst)
-    if (rst)
-      q = 1'b0;
-  	else if (enb)
-  	  q = d;
-  
-  assign qb = ~q;
+// Flip-Flop tipo D com sinal 'enb'
+module dff_4bit(output reg [3:0] q, input [3:0] d, input clk, enb);
+  always @ (posedge clk)
+    if (enb)
+      q = d;
 endmodule
 
+// Contador parametrizavel comportamental, produzido na parte 2
 module behav_counter #(parameter width=4, max_count=10)(input clk, rst_s, enb, output reg [width-1:0] q, output cnt_max);
   
   always @ (posedge clk, posedge rst_s)
@@ -73,28 +72,38 @@ module behav_counter #(parameter width=4, max_count=10)(input clk, rst_s, enb, o
 
 endmodule
 
+// Contador digital BCD de 000 a 999, com 21 fios de output para 3 displays de 7 segmentos
 module counter_999 #(parameter module_width=4, module_count=10)
-(output [20:0] display, input clk, enb, rst_s);
+(output [20:0] display, output cnt_max, input clk, enb, rst_s, ld);
 
-  reg [3:0] qb[3];
+  reg [3:0] qx[3];
+  reg [3:0] qs[3];
   wire max[3];
 
+  // Gera 3 contadores de 0 a 9 em sequência
   genvar i;
   generate
     for (i=0; i<3; i=i+1)
       begin
         if (i == 0)
+          // Primeiro contador
           behav_counter #(.width(module_width), .max_count(module_count))
-          u0 (.q(qb[0]), .cnt_max(max[0]), .clk(clk), .enb(enb), .rst_s(rst_s));
+          u0 (.q(qx[0]), .cnt_max(max[0]), .clk(clk), .enb(enb), .rst_s(rst_s));
         else
+          // Contadores seguintes, com a saida 'cnt_max' do anterior entrando em 'enb' no seguinte
           behav_counter #(.width(module_width), .max_count(module_count))
-          ui (.q(qb[i]), .cnt_max(max[i]), .clk(clk), .enb(max[i-1]), .rst_s(rst_s));
+          ui (.q(qx[i]), .cnt_max(max[i]), .clk(clk), .enb(max[i-1]), .rst_s(rst_s));
 
+        dff_4bit register (.q(qs[i]), .clk(clk), .d(qx[i]), .enb(ld));
+
+        // Decodificador BCD para 7 segmentos recebendo 'q' do contador atual e retornando os 7 fios de display
         BCDto7seg #(.common_cathode(1))
         bcdi (.a(display[i*7]), .b(display[1+i*7]), .c(display[2+i*7]), .d(display[3+i*7]),
-         .e(display[4+i*7]), .f(display[5+i*7]), .g(display[6+i*7]), .BCD(qb[i]));
+         .e(display[4+i*7]), .f(display[5+i*7]), .g(display[6+i*7]), .BCD(qs[i]));
       end
   endgenerate
+  
+  assign cnt_max = max[2];
 
 
 endmodule

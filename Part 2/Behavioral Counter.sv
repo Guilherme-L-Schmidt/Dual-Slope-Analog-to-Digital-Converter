@@ -1,6 +1,6 @@
 module behav_counter #(parameter width=4, max_count=10)(input clk, rst_s, enb, output reg [width-1:0] q, output cnt_max);
   
-  always @ (posedge clk, posedge rst_s)
+  always @ (negedge clk, posedge rst_s)
     begin
       cnt_max<=0;
       if (rst_s)
@@ -18,5 +18,4 @@ module behav_counter #(parameter width=4, max_count=10)(input clk, rst_s, enb, o
             q<=0;
          end
      end
-
 endmodule
